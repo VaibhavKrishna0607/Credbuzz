@@ -71,26 +71,26 @@ export default function TasksPage() {
   });
 
   // Get unique categories for filter dropdown
-  const categories = [...new Set(tasks.map(t => t.category))];
+  const categories = Array.from(new Set(tasks.map(t => t.category)));
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">Loading tasks...</div>
+        <div className="text-xl text-slate-400">Loading tasks...</div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Task Marketplace</h1>
+      <h1 className="text-3xl font-bold mb-8 text-slate-100">Task Marketplace</h1>
 
       {/* Filters */}
       <div className="card mb-8">
         <div className="grid md:grid-cols-3 gap-4">
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-300 mb-1">
               Search
             </label>
             <input
@@ -104,7 +104,7 @@ export default function TasksPage() {
           
           {/* Category Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-300 mb-1">
               Category
             </label>
             <select
@@ -123,14 +123,14 @@ export default function TasksPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-8">
+        <div className="bg-red-900/50 text-red-300 p-4 rounded-lg mb-8 border border-red-700">
           {error}
         </div>
       )}
 
       {/* Tasks Grid */}
       {filteredTasks.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-slate-400">
           No tasks found. Check back later!
         </div>
       ) : (
@@ -148,22 +148,22 @@ export default function TasksPage() {
 function TaskCard({ task }: { task: Task }) {
   return (
     <Link href={`/tasks/${task.id}`}>
-      <div className="card hover:shadow-lg transition-shadow cursor-pointer h-full">
+      <div className="card hover:shadow-xl hover:border-slate-600 transition-all cursor-pointer h-full">
         {/* Header */}
         <div className="flex justify-between items-start mb-3">
-          <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded">
+          <span className="px-2 py-1 bg-primary-900/50 text-primary-400 text-xs font-medium rounded border border-primary-700">
             {task.category || 'General'}
           </span>
-          <span className="font-bold text-primary-600">
+          <span className="font-bold text-primary-400">
             💰 {task.credits} credits
           </span>
         </div>
 
         {/* Title & Description */}
-        <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+        <h3 className="text-lg font-semibold mb-2 text-slate-100 line-clamp-2">
           {task.title}
         </h3>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+        <p className="text-slate-400 text-sm mb-4 line-clamp-3">
           {task.description}
         </p>
 
@@ -172,20 +172,20 @@ function TaskCard({ task }: { task: Task }) {
           {(task.skills || []).slice(0, 3).map((skill, idx) => (
             <span 
               key={idx}
-              className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
+              className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded"
             >
               {skill}
             </span>
           ))}
           {(task.skills || []).length > 3 && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-slate-500">
               +{task.skills.length - 3} more
             </span>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-3">
+        <div className="flex justify-between items-center text-sm text-slate-400 border-t border-slate-700 pt-3">
           <span>⏱️ {task.estimatedHours || 0}h</span>
           <span>📅 {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No deadline'}</span>
         </div>

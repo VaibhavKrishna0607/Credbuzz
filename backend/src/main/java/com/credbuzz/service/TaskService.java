@@ -1,19 +1,27 @@
 package com.credbuzz.service;
 
+import com.credbuzz.dto.BidScoreDto;
 import com.credbuzz.dto.CreateTaskRequest;
 import com.credbuzz.dto.TaskDto;
 import com.credbuzz.dto.UserDto;
+import com.credbuzz.dto.ml.AuctionResult;
+import com.credbuzz.dto.ml.BidFeatureSnapshot;
+import com.credbuzz.entity.Bid;
 import com.credbuzz.entity.Task;
 import com.credbuzz.entity.TaskStatus;
 import com.credbuzz.entity.User;
+import com.credbuzz.repository.BidRepository;
 import com.credbuzz.repository.TaskRepository;
 import com.credbuzz.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -22,20 +30,27 @@ import java.util.stream.Collectors;
  * ============================================
  * 
  * Business logic for task operations.
+ * Includes auction lifecycle management.
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TaskService {
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final BidRepository bidRepository;
     private final UserService userService;
+    private final BidEvaluationService bidEvaluationService;
+    private final UserPerformanceService userPerformanceService;
 
     /**
-     * Get available (open) tasks
+     * Get available (open or bidding) tasks for the marketplace
      */
     public List<TaskDto> getAvailableTasks() {
-        List<Task> tasks = taskRepository.findByStatusOrderByCreatedAtDesc(TaskStatus.OPEN);
+        List<Task> tasks = taskRepository.findByStatusInOrderByCreatedAtDesc(
+                java.util.Arrays.asList(TaskStatus.OPEN, TaskStatus.BIDDING)
+        );
         return tasks.stream().map(this::toDto).collect(Collectors.toList());
     }
 
@@ -107,8 +122,336 @@ public class TaskService {
         return toDto(savedTask);
     }
 
+    // ============================================
+    // AUCTION LIFECYCLE METHODS
+    // ============================================
+
     /**
-     * Claim a task
+     * Start bidding phase for a task
+     * Only task creator can start bidding
+     * Transition: OPEN → BIDDING
+     * 
+     * @param maxBids Maximum bids before auto-closing (default 5)
+     */
+    @Transactional
+    public TaskDto startBidding(Long taskId, Long userId, LocalDateTime biddingDeadline, Integer maxBids) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        // Validation: Only task poster can start bidding
+        if (!task.getPoster().getId().equals(userId)) {
+            throw new RuntimeException("Only task creator can start bidding");
+        }
+
+        // Validation: Check valid transition
+        if (!task.getStatus().canTransitionTo(TaskStatus.BIDDING)) {
+            throw new RuntimeException("Cannot start bidding. Current status: " + task.getStatus() + 
+                    ". Task must be in OPEN status.");
+        }
+
+        // Update task
+        task.setStatus(TaskStatus.BIDDING);
+        task.setBiddingDeadline(biddingDeadline);
+        task.setMaxBids(maxBids != null ? maxBids : 5); // Default 5 bids
+
+        Task savedTask = taskRepository.save(task);
+        log.info("Started bidding for task {} with maxBids={}", taskId, task.getMaxBids());
+        return toDto(savedTask);
+    }
+
+    /**
+     * Close the auction/bidding phase with automatic bid selection
+     * Only task creator can close bidding
+     * Transition: BIDDING → AUCTION_CLOSED → ASSIGNED
+     * 
+     * This method:
+     * 1. Validates task status is BIDDING
+     * 2. Fetches and ranks all bids using BidEvaluationService
+     * 3. Selects the highest scored bid
+     * 4. Marks selected = true on winning bid
+     * 5. Updates task status to AUCTION_CLOSED then ASSIGNED
+     * 6. Assigns task to winning bidder
+     * 7. Records auction history for ML training
+     */
+    @Transactional
+    public TaskDto closeAuction(Long taskId, Long userId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        // Validation: Only task poster can close auction
+        if (!task.getPoster().getId().equals(userId)) {
+            throw new RuntimeException("Only task creator can close the auction");
+        }
+
+        // Validation: Task must be in BIDDING status
+        if (task.getStatus() != TaskStatus.BIDDING) {
+            throw new RuntimeException("Cannot close auction. Current status: " + task.getStatus() + 
+                    ". Task must be in BIDDING status.");
+        }
+
+        // Get all bids for this task
+        List<Bid> bids = bidRepository.findByTaskIdOrderByCreatedAtDesc(taskId);
+        
+        if (bids.isEmpty()) {
+            throw new RuntimeException("Cannot close auction: No bids received");
+        }
+
+        // Evaluate and rank bids using BidEvaluationService
+        List<BidScoreDto> rankedBids = bidEvaluationService.evaluateAndRankBids(task);
+        log.info("Ranked {} bids for task {}", rankedBids.size(), taskId);
+
+        // Get the best bid
+        BidScoreDto bestBidScore = rankedBids.get(0);
+        Bid winningBid = bidRepository.findById(bestBidScore.getBidId())
+                .orElseThrow(() -> new RuntimeException("Winning bid not found"));
+
+        log.info("Selected bid {} from user {} with score {}", 
+                winningBid.getId(), winningBid.getBidder().getName(), bestBidScore.getTotalScore());
+
+        // Mark winning bid as selected
+        winningBid.setSelected(true);
+        bidRepository.save(winningBid);
+
+        // Update task status: BIDDING → AUCTION_CLOSED
+        task.setStatus(TaskStatus.AUCTION_CLOSED);
+        taskRepository.save(task);
+
+        // Update task status: AUCTION_CLOSED → ASSIGNED and assign to winner
+        task.setStatus(TaskStatus.ASSIGNED);
+        task.setAssignee(winningBid.getBidder());
+        task.setCredits(winningBid.getProposedCredits()); // Update credits to winning bid amount
+        Task savedTask = taskRepository.save(task);
+
+        // Record auction history for ML training
+        bidEvaluationService.recordAuctionHistory(task, bids, winningBid);
+
+        // Update user performance metrics
+        userPerformanceService.recordTaskAssigned(winningBid.getBidder().getId());
+
+        log.info("Auction closed for task {}. Winner: {} (bid {})", 
+                taskId, winningBid.getBidder().getName(), winningBid.getId());
+
+        return toDto(savedTask);
+    }
+
+    /**
+     * Close auction and manually select a specific bid
+     * Allows task creator to override automatic selection
+     */
+    @Transactional
+    public TaskDto closeAuctionWithBid(Long taskId, Long userId, Long selectedBidId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        // Validation: Only task poster can close auction
+        if (!task.getPoster().getId().equals(userId)) {
+            throw new RuntimeException("Only task creator can close the auction");
+        }
+
+        // Validation: Task must be in BIDDING, AUCTION_CLOSED, or PENDING_SELECTION status
+        if (task.getStatus() != TaskStatus.BIDDING && 
+            task.getStatus() != TaskStatus.AUCTION_CLOSED &&
+            task.getStatus() != TaskStatus.PENDING_SELECTION) {
+            throw new RuntimeException("Cannot close auction. Current status: " + task.getStatus());
+        }
+
+        // Get the selected bid
+        Bid selectedBid = bidRepository.findById(selectedBidId)
+                .orElseThrow(() -> new RuntimeException("Bid not found"));
+
+        // Validate bid belongs to this task
+        if (!selectedBid.getTask().getId().equals(taskId)) {
+            throw new RuntimeException("Bid does not belong to this task");
+        }
+
+        // Get all bids for history
+        List<Bid> bids = bidRepository.findByTaskIdOrderByCreatedAtDesc(taskId);
+
+        // Mark selected bid
+        selectedBid.setSelected(true);
+        bidRepository.save(selectedBid);
+
+        // If coming from a bidding state, transition through AUCTION_CLOSED first
+        if (task.getStatus() == TaskStatus.BIDDING) {
+            task.setStatus(TaskStatus.AUCTION_CLOSED);
+            taskRepository.save(task);
+        }
+        
+        task.setStatus(TaskStatus.ASSIGNED);
+        task.setAssignee(selectedBid.getBidder());
+        task.setCredits(selectedBid.getProposedCredits());
+        Task savedTask = taskRepository.save(task);
+
+        // Record auction history
+        bidEvaluationService.recordAuctionHistory(task, bids, selectedBid);
+        userPerformanceService.recordTaskAssigned(selectedBid.getBidder().getId());
+
+        log.info("Manual selection: Task {} assigned to '{}' (from status: {})", 
+                taskId, selectedBid.getBidder().getName(), task.getStatus());
+
+        return toDto(savedTask);
+    }
+
+    /**
+     * Auto-close auction when maxBids threshold is reached
+     * System-triggered (no user validation)
+     * Uses ML/heuristic to select the best bidder automatically
+     */
+    @Transactional
+    public TaskDto autoCloseAuction(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        // Validation: Task must be in BIDDING status
+        if (task.getStatus() != TaskStatus.BIDDING) {
+            log.warn("Cannot auto-close auction. Task {} is in status: {}", taskId, task.getStatus());
+            return toDto(task);
+        }
+
+        // Get all bids for this task
+        List<Bid> bids = bidRepository.findByTaskIdOrderByCreatedAtDesc(taskId);
+        
+        if (bids.isEmpty()) {
+            log.warn("Cannot auto-close auction: No bids received for task {}", taskId);
+            return toDto(task);
+        }
+
+        log.info("Auto-closing auction for task {} with {} bids (threshold: {})", 
+                taskId, bids.size(), task.getMaxBids());
+
+        // Use ML to evaluate and rank bids - get full result with confidence info
+        AuctionResult auctionResult = bidEvaluationService.evaluateWithMLFullResult(task);
+        log.info("ML ranked {} bids for task {}", auctionResult.getRankedBids().size(), taskId);
+
+        // Check if manual confirmation is required (confidence-aware automation)
+        if (Boolean.TRUE.equals(auctionResult.getRequiresManualConfirmation())) {
+            log.info("CONFIDENCE CHECK: Top bids too close (margin: {:.4f} < threshold: {:.4f}). " +
+                    "Task {} requires manual selection.", 
+                    auctionResult.getConfidenceMargin(),
+                    auctionResult.getConfidenceThreshold(),
+                    taskId);
+            
+            // Transition to PENDING_SELECTION instead of auto-assigning
+            task.setStatus(TaskStatus.AUCTION_CLOSED);
+            taskRepository.save(task);
+            task.setStatus(TaskStatus.PENDING_SELECTION);
+            Task savedTask = taskRepository.save(task);
+            
+            log.info("Task {} moved to PENDING_SELECTION - awaiting manual bid selection", taskId);
+            return toDto(savedTask);
+        }
+
+        // Confident selection - proceed with auto-assignment
+        BidFeatureSnapshot bestBidSnapshot = auctionResult.getRankedBids().get(0);
+        Bid winningBid = bidRepository.findById(bestBidSnapshot.getBidId())
+                .orElseThrow(() -> new RuntimeException("Winning bid not found"));
+
+        log.info("ML confidently selected bid {} from user '{}' with score {} (margin: {:.4f})", 
+                winningBid.getId(), 
+                winningBid.getBidder().getName(), 
+                auctionResult.getWinningScore(),
+                auctionResult.getConfidenceMargin());
+
+        // Mark winning bid as selected
+        winningBid.setSelected(true);
+        bidRepository.save(winningBid);
+
+        // Update task status: BIDDING → AUCTION_CLOSED → ASSIGNED
+        task.setStatus(TaskStatus.AUCTION_CLOSED);
+        taskRepository.save(task);
+
+        task.setStatus(TaskStatus.ASSIGNED);
+        task.setAssignee(winningBid.getBidder());
+        task.setCredits(winningBid.getProposedCredits());
+        Task savedTask = taskRepository.save(task);
+
+        // Record auction history for ML training
+        bidEvaluationService.recordAuctionHistory(task, bids, winningBid);
+
+        // Update user performance metrics
+        userPerformanceService.recordTaskAssigned(winningBid.getBidder().getId());
+
+        log.info("AUTO-CLOSE: Task {} assigned to '{}' via confident ML selection", 
+                taskId, winningBid.getBidder().getName());
+
+        return toDto(savedTask);
+    }
+
+    /**
+     * Get ranked bids for a task (preview before closing)
+     */
+    public List<BidScoreDto> getRankedBids(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+        return bidEvaluationService.evaluateAndRankBids(task);
+    }
+
+    /**
+     * Accept assignment (for assignee after bid is selected)
+     * Transition: ASSIGNED → IN_PROGRESS
+     */
+    @Transactional
+    public TaskDto acceptAssignment(Long taskId, Long userId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        // Validation: Only assignee can accept
+        if (task.getAssignee() == null || !task.getAssignee().getId().equals(userId)) {
+            throw new RuntimeException("Only the assigned user can accept");
+        }
+
+        // Validation: Check valid transition
+        if (!task.getStatus().canTransitionTo(TaskStatus.IN_PROGRESS)) {
+            throw new RuntimeException("Cannot accept assignment. Current status: " + task.getStatus());
+        }
+
+        task.setStatus(TaskStatus.IN_PROGRESS);
+
+        Task savedTask = taskRepository.save(task);
+        return toDto(savedTask);
+    }
+
+    /**
+     * Generic status transition with validation
+     */
+    @Transactional
+    public TaskDto transitionStatus(Long taskId, Long userId, TaskStatus newStatus) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        // Validation: Check if transition is allowed
+        if (!task.getStatus().canTransitionTo(newStatus)) {
+            throw new RuntimeException("Invalid status transition from " + task.getStatus() + 
+                    " to " + newStatus);
+        }
+
+        // Additional permission checks based on target status
+        switch (newStatus) {
+            case BIDDING, AUCTION_CLOSED, CANCELLED -> {
+                if (!task.getPoster().getId().equals(userId)) {
+                    throw new RuntimeException("Only task creator can perform this action");
+                }
+            }
+            case IN_PROGRESS, SUBMITTED -> {
+                if (task.getAssignee() == null || !task.getAssignee().getId().equals(userId)) {
+                    throw new RuntimeException("Only assignee can perform this action");
+                }
+            }
+            case COMPLETED -> {
+                if (!task.getPoster().getId().equals(userId)) {
+                    throw new RuntimeException("Only task creator can complete the task");
+                }
+            }
+            default -> {}
+        }
+
+        task.setStatus(newStatus);
+        Task savedTask = taskRepository.save(task);
+        return toDto(savedTask);
+    }
+
+    /**
+     * Claim a task (legacy - for non-auction tasks)
      */
     @Transactional
     public TaskDto claimTask(Long taskId, Long userId) {
@@ -136,6 +479,7 @@ public class TaskService {
 
     /**
      * Submit a task
+     * Allows submission from both ASSIGNED and IN_PROGRESS status
      */
     @Transactional
     public TaskDto submitTask(Long taskId, Long userId, String content) {
@@ -146,8 +490,10 @@ public class TaskService {
         if (!task.getAssignee().getId().equals(userId)) {
             throw new RuntimeException("Only assignee can submit");
         }
-        if (task.getStatus() != TaskStatus.IN_PROGRESS) {
-            throw new RuntimeException("Task is not in progress");
+        
+        // Allow submission from ASSIGNED or IN_PROGRESS
+        if (task.getStatus() != TaskStatus.IN_PROGRESS && task.getStatus() != TaskStatus.ASSIGNED) {
+            throw new RuntimeException("Task is not in progress. Current status: " + task.getStatus());
         }
 
         // Submit
@@ -156,6 +502,7 @@ public class TaskService {
         task.setStatus(TaskStatus.SUBMITTED);
 
         Task savedTask = taskRepository.save(task);
+        log.info("Task {} submitted by user {}", taskId, userId);
         return toDto(savedTask);
     }
 
@@ -275,6 +622,8 @@ public class TaskService {
                 .status(task.getStatus().name())
                 .skills(task.getSkills())
                 .deadline(task.getDeadline())
+                .biddingDeadline(task.getBiddingDeadline())
+                .maxBids(task.getMaxBids())
                 .submission(task.getSubmission())
                 .submittedAt(task.getSubmittedAt())
                 .completedAt(task.getCompletedAt())
@@ -289,6 +638,11 @@ public class TaskService {
         // Add assignee info
         if (task.getAssignee() != null) {
             dto.setAssignee(userService.toDto(task.getAssignee()));
+        }
+
+        // Add bid count for bidding tasks
+        if (task.getStatus() == TaskStatus.BIDDING && task.getId() != null) {
+            dto.setBidCount(bidRepository.countByTaskId(task.getId()));
         }
 
         return dto;

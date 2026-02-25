@@ -62,10 +62,10 @@ export default function RegisterPage() {
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">
+          <h2 className="text-3xl font-bold text-slate-100">
             Create Account
           </h2>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-slate-400">
             Join CredBuzz and start exchanging skills
           </p>
         </div>
@@ -75,7 +75,7 @@ export default function RegisterPage() {
           <div className="space-y-4">
             {/* Name Field */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="name" className="block text-sm font-medium text-slate-300">
                 Full Name
               </label>
               <input
@@ -91,7 +91,7 @@ export default function RegisterPage() {
 
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-300">
                 Email Address
               </label>
               <input
@@ -107,7 +107,7 @@ export default function RegisterPage() {
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-300">
                 Password
               </label>
               <input
@@ -119,14 +119,14 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Must be at least 6 characters
               </p>
             </div>
 
             {/* Confirm Password Field */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300">
                 Confirm Password
               </label>
               <input
@@ -151,15 +151,15 @@ export default function RegisterPage() {
           </button>
 
           {/* Bonus Info */}
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-slate-400">
             🎁 You'll receive 50 free credits to get started!
           </p>
         </form>
 
         {/* Login Link */}
-        <p className="text-center text-gray-600">
+        <p className="text-center text-slate-400">
           Already have an account?{' '}
-          <Link href="/login" className="text-primary-600 hover:text-primary-500 font-medium">
+          <Link href="/login" className="text-primary-400 hover:text-primary-300 font-medium">
             Sign in
           </Link>
         </p>

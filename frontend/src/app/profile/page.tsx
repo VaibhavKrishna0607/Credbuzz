@@ -85,7 +85,7 @@ export default function ProfilePage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">Loading...</div>
+        <div className="text-xl text-slate-400">Loading...</div>
       </div>
     );
   }
@@ -97,18 +97,18 @@ export default function ProfilePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+        <h1 className="text-3xl font-bold mb-8 text-slate-100">My Profile</h1>
 
         <div className="card">
           {/* Avatar & Basic Info */}
-          <div className="flex items-center mb-6 pb-6 border-b">
-            <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center text-3xl font-bold text-primary-600">
+          <div className="flex items-center mb-6 pb-6 border-b border-slate-700">
+            <div className="w-20 h-20 bg-primary-900/50 rounded-full flex items-center justify-center text-3xl font-bold text-primary-400 border border-primary-700">
               {user.name?.charAt(0).toUpperCase() || '?'}
             </div>
             <div className="ml-6">
-              <h2 className="text-2xl font-semibold">{user.name}</h2>
-              <p className="text-gray-600">{user.email}</p>
-              <span className="inline-block mt-2 px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
+              <h2 className="text-2xl font-semibold text-slate-100">{user.name}</h2>
+              <p className="text-slate-400">{user.email}</p>
+              <span className="inline-block mt-2 px-3 py-1 bg-primary-900/50 text-primary-400 rounded-full text-sm font-medium border border-primary-700">
                 💰 {user.credits} credits
               </span>
             </div>
@@ -118,7 +118,7 @@ export default function ProfilePage() {
           <div className="space-y-6">
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-300 mb-1">
                 Name
               </label>
               {editing ? (
@@ -129,13 +129,13 @@ export default function ProfilePage() {
                   onChange={(e) => setName(e.target.value)}
                 />
               ) : (
-                <p className="text-gray-900">{user.name}</p>
+                <p className="text-slate-200">{user.name}</p>
               )}
             </div>
 
             {/* Bio */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-300 mb-1">
                 Bio
               </label>
               {editing ? (
@@ -146,13 +146,13 @@ export default function ProfilePage() {
                   onChange={(e) => setBio(e.target.value)}
                 />
               ) : (
-                <p className="text-gray-900">{user.bio || 'No bio added yet.'}</p>
+                <p className="text-slate-200">{user.bio || 'No bio added yet.'}</p>
               )}
             </div>
 
             {/* Skills */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-300 mb-1">
                 Skills
               </label>
               {editing ? (
@@ -178,12 +178,12 @@ export default function ProfilePage() {
                     {skills.map((skill, idx) => (
                       <span
                         key={idx}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm flex items-center gap-2"
+                        className="px-3 py-1 bg-slate-700 text-slate-300 rounded-full text-sm flex items-center gap-2"
                       >
                         {skill}
                         <button
                           onClick={() => handleRemoveSkill(skill)}
-                          className="text-gray-500 hover:text-red-500"
+                          className="text-slate-400 hover:text-red-400"
                         >
                           ×
                         </button>
@@ -197,20 +197,20 @@ export default function ProfilePage() {
                     user.skills.map((skill: string, idx: number) => (
                       <span
                         key={idx}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                        className="px-3 py-1 bg-slate-700 text-slate-300 rounded-full text-sm"
                       >
                         {skill}
                       </span>
                     ))
                   ) : (
-                    <p className="text-gray-500">No skills added yet.</p>
+                    <p className="text-slate-500">No skills added yet.</p>
                   )}
                 </div>
               )}
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-6 border-t">
+            <div className="pt-6 border-t border-slate-700">
               {editing ? (
                 <div className="flex gap-4">
                   <button
@@ -223,7 +223,7 @@ export default function ProfilePage() {
                   <button
                     onClick={handleCancel}
                     disabled={saving}
-                    className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="px-6 py-2 border border-slate-600 rounded-lg hover:bg-slate-700 text-slate-300"
                   >
                     Cancel
                   </button>
@@ -242,15 +242,15 @@ export default function ProfilePage() {
 
         {/* Account Info */}
         <div className="card mt-6">
-          <h3 className="font-semibold mb-4">Account Information</h3>
+          <h3 className="font-semibold mb-4 text-slate-200">Account Information</h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">Email</span>
-              <span>{user.email}</span>
+              <span className="text-slate-400">Email</span>
+              <span className="text-slate-200">{user.email}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Member since</span>
-              <span>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</span>
+              <span className="text-slate-400">Member since</span>
+              <span className="text-slate-200">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</span>
             </div>
           </div>
         </div>

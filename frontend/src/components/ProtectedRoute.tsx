@@ -37,7 +37,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">Loading...</div>
+        <div className="text-xl text-slate-400">Loading...</div>
       </div>
     );
   }
@@ -46,7 +46,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">Redirecting to login...</div>
+        <div className="text-xl text-slate-400">Redirecting to login...</div>
       </div>
     );
   }

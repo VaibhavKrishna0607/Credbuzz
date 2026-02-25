@@ -52,10 +52,10 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">
+          <h2 className="text-3xl font-bold text-slate-100">
             Welcome Back
           </h2>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-slate-400">
             Sign in to your CredBuzz account
           </p>
         </div>
@@ -65,7 +65,7 @@ export default function LoginPage() {
           <div className="space-y-4">
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-300">
                 Email Address
               </label>
               <input
@@ -81,7 +81,7 @@ export default function LoginPage() {
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-300">
                 Password
               </label>
               <input
@@ -119,10 +119,10 @@ export default function LoginPage() {
           {/* TODO: Add Google OAuth button */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="w-full border-t border-slate-600" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">
+              <span className="px-2 bg-slate-900 text-slate-400">
                 Or continue with
               </span>
             </div>
@@ -156,9 +156,9 @@ export default function LoginPage() {
         </form>
 
         {/* Register Link */}
-        <p className="text-center text-gray-600">
+        <p className="text-center text-slate-400">
           Don't have an account?{' '}
-          <Link href="/register" className="text-primary-600 hover:text-primary-500 font-medium">
+          <Link href="/register" className="text-primary-400 hover:text-primary-300 font-medium">
             Sign up
           </Link>
         </p>

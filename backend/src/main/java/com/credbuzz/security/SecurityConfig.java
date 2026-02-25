@@ -81,6 +81,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/tasks/available").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/tasks/autocomplete-*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/tasks/{id}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/tasks/{id}/bids").permitAll()
                 
                 // Public user routes
                 .requestMatchers(HttpMethod.GET, "/api/users").permitAll()
@@ -92,6 +93,10 @@ public class SecurityConfig {
                 
                 // Static files
                 .requestMatchers("/uploads/**").permitAll()
+                
+                // Admin routes (TODO: Add ADMIN role check in production)
+                // For now, require authentication
+                .requestMatchers("/api/admin/**").authenticated()
                 
                 // ============================================
                 // PROTECTED ROUTES (authentication required)

@@ -1,22 +1,45 @@
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\controller\TaskController.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\entity\Task.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\controller\UserController.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\service\UserService.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\controller\AuthController.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\repository\UserRepository.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\entity\User.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\security\JwtAuthenticationFilter.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\repository\TaskRepository.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\ApiResponse.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\security\CustomUserDetailsService.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\CreateTaskRequest.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\RegisterRequest.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\TaskDto.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\entity\TaskStatus.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\CredBuzzApplication.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\LoginRequest.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\service\TaskService.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\security\SecurityConfig.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\UserDto.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\AuthResponse.java
-V:\My Projects\Capstone Project\CredBuzz-2.0\backend\src\main\java\com\credbuzz\security\JwtService.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\ml\AuctionResult.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\BidScoreDto.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\CreateBidRequest.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\AuthResponse.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\entity\Bid.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\ml\MLPredictionResponse.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\ml\BidFeatureSnapshot.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\security\SecurityConfig.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\service\ml\MLIntegrationService.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\security\JwtAuthenticationFilter.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\service\TaskService.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\controller\UserController.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\entity\TaskStatus.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\security\JwtService.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\CredBuzzApplication.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\repository\TaskRepository.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\ml\MLPredictionRequest.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\UserDto.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\service\BidService.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\repository\BidRepository.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\service\ml\TextAnalysisService.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\repository\UserPerformanceRepository.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\security\CustomUserDetailsService.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\repository\AuctionHistoryRepository.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\entity\UserPerformance.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\controller\AuthController.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\controller\TaskController.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\TaskDto.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\BidDto.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\service\BidEvaluationService.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\ApiResponse.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\entity\User.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\RegisterRequest.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\CreateTaskRequest.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\controller\BidController.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\StartBiddingRequest.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\service\ml\FeatureEngineeringService.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\service\UserPerformanceService.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\service\UserService.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\entity\Task.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\repository\UserRepository.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\entity\AuctionHistory.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\config\MLConfig.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\controller\AdminController.java
+V:\My Projects\CredBuzz-2.0\backend\src\main\java\com\credbuzz\dto\LoginRequest.java

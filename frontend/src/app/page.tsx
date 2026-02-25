@@ -36,7 +36,7 @@ export default function Home() {
             </Link>
             <Link 
               href="/register" 
-              className="btn bg-white text-primary-600 hover:bg-primary-50 text-lg px-8 py-3"
+              className="btn bg-slate-800 text-primary-400 hover:bg-slate-700 border border-slate-600 text-lg px-8 py-3"
             >
               Get Started
             </Link>
@@ -47,14 +47,14 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-100">How It Works</h2>
           
           <div className="grid md:grid-cols-3 gap-8">
             {/* Feature 1 */}
             <div className="card text-center">
               <div className="text-4xl mb-4">📝</div>
-              <h3 className="text-xl font-semibold mb-2">Create Tasks</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-2 text-slate-100">Create Tasks</h3>
+              <p className="text-slate-400">
                 Post tasks you need help with. Set credit rewards for completion.
               </p>
             </div>
@@ -62,8 +62,8 @@ export default function Home() {
             {/* Feature 2 */}
             <div className="card text-center">
               <div className="text-4xl mb-4">🎯</div>
-              <h3 className="text-xl font-semibold mb-2">Complete Tasks</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-2 text-slate-100">Complete Tasks</h3>
+              <p className="text-slate-400">
                 Browse available tasks and claim ones that match your skills.
               </p>
             </div>
@@ -71,8 +71,8 @@ export default function Home() {
             {/* Feature 3 */}
             <div className="card text-center">
               <div className="text-4xl mb-4">💰</div>
-              <h3 className="text-xl font-semibold mb-2">Earn Credits</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-2 text-slate-100">Earn Credits</h3>
+              <p className="text-slate-400">
                 Receive credits when your work is approved. Use them to create new tasks.
               </p>
             </div>
@@ -81,10 +81,10 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gray-100 py-20">
+      <section className="bg-slate-800 py-20">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Start?</h2>
-          <p className="text-gray-600 mb-8">
+          <h2 className="text-3xl font-bold mb-4 text-slate-100">Ready to Start?</h2>
+          <p className="text-slate-400 mb-8">
             Join our community and start exchanging skills today!
           </p>
           <Link 

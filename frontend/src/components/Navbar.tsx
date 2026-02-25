@@ -28,11 +28,11 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className="bg-slate-800 shadow-lg border-b border-slate-700">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="text-2xl font-bold text-primary-600">
+          <Link href="/" className="text-2xl font-bold text-primary-400">
             CredBuzz
           </Link>
 
@@ -40,7 +40,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-6">
             <Link 
               href="/tasks" 
-              className="text-gray-600 hover:text-primary-600 transition"
+              className="text-slate-300 hover:text-primary-400 transition"
             >
               Browse Tasks
             </Link>
@@ -49,13 +49,13 @@ export default function Navbar() {
               <>
                 <Link 
                   href="/create-task" 
-                  className="text-gray-600 hover:text-primary-600 transition"
+                  className="text-slate-300 hover:text-primary-400 transition"
                 >
                   Create Task
                 </Link>
                 <Link 
                   href="/my-tasks" 
-                  className="text-gray-600 hover:text-primary-600 transition"
+                  className="text-slate-300 hover:text-primary-400 transition"
                 >
                   My Tasks
                 </Link>
@@ -63,14 +63,14 @@ export default function Navbar() {
                 {/* User Menu */}
                 <div className="flex items-center space-x-4">
                   {/* Credits Display */}
-                  <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
+                  <span className="px-3 py-1 bg-primary-900/50 text-primary-400 rounded-full text-sm font-medium border border-primary-700">
                     💰 {user.credits} credits
                   </span>
                   
                   {/* Profile Link */}
                   <Link 
                     href="/profile" 
-                    className="text-gray-600 hover:text-primary-600 transition"
+                    className="text-slate-300 hover:text-primary-400 transition"
                   >
                     {user.name}
                   </Link>
@@ -78,7 +78,7 @@ export default function Navbar() {
                   {/* Logout Button */}
                   <button
                     onClick={handleLogout}
-                    className="text-gray-600 hover:text-red-600 transition"
+                    className="text-slate-300 hover:text-red-400 transition"
                   >
                     Logout
                   </button>
@@ -88,7 +88,7 @@ export default function Navbar() {
               <>
                 <Link 
                   href="/login" 
-                  className="text-gray-600 hover:text-primary-600 transition"
+                  className="text-slate-300 hover:text-primary-400 transition"
                 >
                   Login
                 </Link>

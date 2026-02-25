@@ -77,7 +77,7 @@ export default function MyTasksPage() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">Loading...</div>
+        <div className="text-xl text-slate-400">Loading...</div>
       </div>
     );
   }
@@ -88,15 +88,15 @@ export default function MyTasksPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">My Tasks</h1>
+      <h1 className="text-3xl font-bold mb-8 text-slate-100">My Tasks</h1>
 
       {/* Tabs */}
-      <div className="flex border-b mb-6">
+      <div className="flex border-b border-slate-700 mb-6">
         <button
           className={`px-6 py-3 font-medium ${
             activeTab === 'posted'
-              ? 'border-b-2 border-primary-600 text-primary-600'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'border-b-2 border-primary-400 text-primary-400'
+              : 'text-slate-400 hover:text-slate-300'
           }`}
           onClick={() => setActiveTab('posted')}
         >
@@ -105,8 +105,8 @@ export default function MyTasksPage() {
         <button
           className={`px-6 py-3 font-medium ${
             activeTab === 'claimed'
-              ? 'border-b-2 border-primary-600 text-primary-600'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'border-b-2 border-primary-400 text-primary-400'
+              : 'text-slate-400 hover:text-slate-300'
           }`}
           onClick={() => setActiveTab('claimed')}
         >
@@ -116,14 +116,14 @@ export default function MyTasksPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-8">
+        <div className="bg-red-900/50 text-red-300 p-4 rounded-lg mb-8 border border-red-700">
           {error}
         </div>
       )}
 
       {/* Tasks List */}
       {displayedTasks.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-slate-400">
           {activeTab === 'posted' 
             ? "You haven't posted any tasks yet." 
             : "You haven't claimed any tasks yet."}
@@ -155,46 +155,47 @@ function TaskRow({ task, isPosted }: { task: Task; isPosted: boolean }) {
   const getStatusColor = (status: string) => {
     const s = status?.toUpperCase();
     switch (s) {
-      case 'OPEN': return 'bg-green-100 text-green-700';
-      case 'IN_PROGRESS': return 'bg-yellow-100 text-yellow-700';
-      case 'SUBMITTED': return 'bg-blue-100 text-blue-700';
-      case 'COMPLETED': return 'bg-gray-100 text-gray-700';
-      case 'CANCELLED': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'OPEN': return 'bg-green-900/50 text-green-400 border border-green-700';
+      case 'BIDDING': return 'bg-blue-900/50 text-blue-400 border border-blue-700';
+      case 'IN_PROGRESS': return 'bg-yellow-900/50 text-yellow-400 border border-yellow-700';
+      case 'SUBMITTED': return 'bg-blue-900/50 text-blue-400 border border-blue-700';
+      case 'COMPLETED': return 'bg-slate-700 text-slate-300 border border-slate-600';
+      case 'CANCELLED': return 'bg-red-900/50 text-red-400 border border-red-700';
+      default: return 'bg-slate-700 text-slate-300 border border-slate-600';
     }
   };
 
   return (
     <Link href={`/tasks/${task.id}`}>
-      <div className="card hover:shadow-lg transition-shadow cursor-pointer">
+      <div className="card hover:shadow-xl hover:border-slate-600 transition-all cursor-pointer">
         <div className="flex justify-between items-center">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded">
+              <span className="px-2 py-1 bg-primary-900/50 text-primary-400 text-xs font-medium rounded border border-primary-700">
                 {task.category || 'General'}
               </span>
               <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusColor(task.status)}`}>
                 {task.status}
               </span>
             </div>
-            <h3 className="text-lg font-semibold">{task.title}</h3>
-            <p className="text-gray-600 text-sm line-clamp-1 mt-1">
+            <h3 className="text-lg font-semibold text-slate-100">{task.title}</h3>
+            <p className="text-slate-400 text-sm line-clamp-1 mt-1">
               {task.description}
             </p>
           </div>
           <div className="text-right ml-4">
-            <div className="font-bold text-primary-600">
+            <div className="font-bold text-primary-400">
               💰 {task.credits} credits
             </div>
             {task.deadline && (
-              <div className="text-sm text-gray-500 mt-1">
+              <div className="text-sm text-slate-400 mt-1">
                 📅 {new Date(task.deadline).toLocaleDateString()}
               </div>
             )}
           </div>
         </div>
         {/* Show assignee for posted tasks, poster for claimed tasks */}
-        <div className="mt-3 pt-3 border-t text-sm text-gray-500">
+        <div className="mt-3 pt-3 border-t border-slate-700 text-sm text-slate-400">
           {isPosted ? (
             task.assignee ? (
               <span>Claimed by: {task.assignee.name}</span>

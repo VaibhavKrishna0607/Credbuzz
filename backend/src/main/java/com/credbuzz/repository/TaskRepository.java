@@ -51,6 +51,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByStatusOrderByCreatedAtDesc(TaskStatus status);
     
     /**
+     * Find tasks available for marketplace (OPEN or BIDDING)
+     */
+    List<Task> findByStatusInOrderByCreatedAtDesc(List<TaskStatus> statuses);
+    
+    /**
      * Search tasks by title or description
      */
     @Query("SELECT t FROM Task t WHERE " +

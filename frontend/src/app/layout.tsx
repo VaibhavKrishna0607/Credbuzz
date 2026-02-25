@@ -55,13 +55,22 @@ export default function RootLayout({
           {/* Navbar appears on all pages */}
           <Navbar />
           
-          {/* Page content renders here */}
-          <main className="min-h-screen bg-gray-50">
+          {/* Page content renders here - Dark mode */}
+          <main className="min-h-screen bg-slate-900 text-slate-100">
             {children}
           </main>
           
           {/* Toast notifications */}
-          <Toaster position="top-right" />
+          <Toaster 
+            position="top-right" 
+            toastOptions={{
+              style: {
+                background: '#1e293b',
+                color: '#f1f5f9',
+                border: '1px solid #334155',
+              },
+            }}
+          />
         </AuthProvider>
       </body>
     </html>

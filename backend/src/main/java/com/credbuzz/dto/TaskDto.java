@@ -24,10 +24,13 @@ public class TaskDto {
     private String status;
     private List<String> skills;
     private LocalDateTime deadline;
+    private LocalDateTime biddingDeadline;
+    private Integer maxBids;
     private UserDto poster;
     private UserDto assignee;
     private String submission;
     private LocalDateTime submittedAt;
     private LocalDateTime completedAt;
     private LocalDateTime createdAt;
+    private Long bidCount;
 }

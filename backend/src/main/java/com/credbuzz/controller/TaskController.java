@@ -19,7 +19,7 @@ import java.util.List;
  * ============================================
  * 
  * Handles all task-related HTTP endpoints.
- * Maps to your Express taskRoutes.js
+ * Includes auction lifecycle endpoints.
  */
 @RestController
 @RequestMapping("/api/tasks")
@@ -100,8 +100,116 @@ public class TaskController {
         }
     }
 
+    // ============================================
+    // AUCTION LIFECYCLE ENDPOINTS
+    // ============================================
+
     /**
-     * Claim a task (protected)
+     * Start bidding phase for a task (protected)
+     * Only task creator can start bidding
+     * 
+     * PUT /api/tasks/:id/start-bidding
+     */
+    @PutMapping("/{id}/start-bidding")
+    public ResponseEntity<ApiResponse<TaskDto>> startBidding(
+            @PathVariable Long id,
+            @RequestBody(required = false) StartBiddingRequest request
+    ) {
+        try {
+            Long userId = getCurrentUserId();
+            TaskDto task = taskService.startBidding(id, userId, 
+                    request != null ? request.getBiddingDeadline() : null,
+                    request != null ? request.getMaxBids() : 5);
+            return ResponseEntity.ok(ApiResponse.success("Bidding started successfully", task));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * Close the auction/bidding phase (protected)
+     * Only task creator can close auction
+     * Automatically selects the best bid using BidEvaluationService
+     * 
+     * PUT /api/tasks/:id/close-auction
+     * POST /api/tasks/:id/close-auction
+     */
+    @PutMapping("/{id}/close-auction")
+    public ResponseEntity<ApiResponse<TaskDto>> closeAuction(@PathVariable Long id) {
+        try {
+            Long userId = getCurrentUserId();
+            TaskDto task = taskService.closeAuction(id, userId);
+            return ResponseEntity.ok(ApiResponse.success("Auction closed successfully", task));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/close-auction")
+    public ResponseEntity<ApiResponse<TaskDto>> closeAuctionPost(@PathVariable Long id) {
+        return closeAuction(id);
+    }
+
+    /**
+     * Close auction with manual bid selection (protected)
+     * Task creator can override automatic selection
+     * 
+     * POST /api/tasks/:id/close-auction/:bidId
+     */
+    @PostMapping("/{id}/close-auction/{bidId}")
+    public ResponseEntity<ApiResponse<TaskDto>> closeAuctionWithBid(
+            @PathVariable Long id,
+            @PathVariable Long bidId
+    ) {
+        try {
+            Long userId = getCurrentUserId();
+            TaskDto task = taskService.closeAuctionWithBid(id, userId, bidId);
+            return ResponseEntity.ok(ApiResponse.success("Auction closed with selected bid", task));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * Get ranked bids for a task (preview before closing)
+     * Shows how bids will be ranked if auction is closed
+     * 
+     * GET /api/tasks/:id/ranked-bids
+     */
+    @GetMapping("/{id}/ranked-bids")
+    public ResponseEntity<ApiResponse<List<BidScoreDto>>> getRankedBids(@PathVariable Long id) {
+        try {
+            List<BidScoreDto> rankedBids = taskService.getRankedBids(id);
+            return ResponseEntity.ok(ApiResponse.success(rankedBids));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * Accept assignment after bid is selected (protected)
+     * Only assignee can accept
+     * 
+     * PUT /api/tasks/:id/accept
+     */
+    @PutMapping("/{id}/accept")
+    public ResponseEntity<ApiResponse<TaskDto>> acceptAssignment(@PathVariable Long id) {
+        try {
+            Long userId = getCurrentUserId();
+            TaskDto task = taskService.acceptAssignment(id, userId);
+            return ResponseEntity.ok(ApiResponse.success("Assignment accepted, task in progress", task));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * Claim a task (protected) - Legacy for non-auction tasks
      * 
      * PUT /api/tasks/:id/claim
      */

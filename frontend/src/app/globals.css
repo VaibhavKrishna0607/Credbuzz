@@ -4,31 +4,42 @@
 
 /**
  * ============================================
- * LEARNING NOTE: Global CSS with Tailwind
+ * DARK MODE THEME
  * ============================================
- * 
- * This is your main CSS file, similar to index.css in your React app.
- * The @tailwind directives import Tailwind's styles.
- * 
- * You can add custom global styles here.
  */
 
-/* Custom scrollbar */
+:root {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --bg-hover: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: #334155;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Custom scrollbar - Dark mode */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #1e293b;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: #475569;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #64748b;
 }
 
 /* Custom focus styles */
@@ -50,15 +61,28 @@
 }
 
 .btn-secondary {
-  @apply btn bg-gray-200 text-gray-800 hover:bg-gray-300;
+  @apply btn bg-slate-700 text-slate-200 hover:bg-slate-600;
 }
 
-/* Input base styles */
+/* Input base styles - Dark mode */
 .input {
-  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  @apply w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent;
 }
 
-/* Card base styles */
+/* Card base styles - Dark mode */
 .card {
-  @apply bg-white rounded-xl shadow-sm p-6 border border-gray-100;
+  @apply bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-700;
+}
+
+/* Dark mode text utilities */
+.text-dark-primary {
+  @apply text-slate-100;
+}
+
+.text-dark-secondary {
+  @apply text-slate-300;
+}
+
+.text-dark-muted {
+  @apply text-slate-400;
 }

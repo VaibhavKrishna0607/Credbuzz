@@ -103,13 +103,13 @@ function CreateTaskContent() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Create New Task</h1>
+        <h1 className="text-3xl font-bold mb-8 text-slate-100">Create New Task</h1>
 
         {/* Credits Display */}
-        <div className="card mb-6 bg-primary-50 border-primary-200">
+        <div className="card mb-6 bg-primary-900/30 border-primary-700">
           <div className="flex justify-between items-center">
-            <span className="text-gray-700">Your Available Credits:</span>
-            <span className="text-2xl font-bold text-primary-600">
+            <span className="text-slate-300">Your Available Credits:</span>
+            <span className="text-2xl font-bold text-primary-400">
               💰 {user?.credits || 0}
             </span>
           </div>
@@ -120,7 +120,7 @@ function CreateTaskContent() {
           <div className="space-y-6">
             {/* Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-300 mb-1">
                 Task Title *
               </label>
               <input
@@ -137,7 +137,7 @@ function CreateTaskContent() {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-300 mb-1">
                 Description *
               </label>
               <textarea
@@ -149,7 +149,7 @@ function CreateTaskContent() {
                 maxLength={1000}
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 {formData.description.length}/1000 characters
               </p>
             </div>
@@ -158,7 +158,7 @@ function CreateTaskContent() {
             <div className="grid md:grid-cols-2 gap-4">
               {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Category *
                 </label>
                 <select
@@ -177,7 +177,7 @@ function CreateTaskContent() {
 
               {/* Credits */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Credits Reward *
                 </label>
                 <input
@@ -190,7 +190,7 @@ function CreateTaskContent() {
                   onChange={handleChange}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Maximum: {user?.credits || 0} credits
                 </p>
               </div>
@@ -198,7 +198,7 @@ function CreateTaskContent() {
 
             {/* Skills */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-300 mb-1">
                 Required Skills
               </label>
               <input
@@ -215,7 +215,7 @@ function CreateTaskContent() {
             <div className="grid md:grid-cols-2 gap-4">
               {/* Estimated Hours */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Estimated Hours *
                 </label>
                 <input
@@ -232,7 +232,7 @@ function CreateTaskContent() {
 
               {/* Deadline */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Deadline *
                 </label>
                 <input

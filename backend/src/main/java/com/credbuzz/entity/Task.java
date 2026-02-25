@@ -58,6 +58,17 @@ public class Task {
     @JoinColumn(name = "assignee_id")
     private User assignee;
 
+    @Column
+    private LocalDateTime biddingDeadline;
+
+    /**
+     * Maximum number of bids before auto-closing auction.
+     * When this threshold is reached, ML evaluates and selects the best bidder.
+     * Default: 5 bids
+     */
+    @Column
+    private Integer maxBids;
+
     @Column(length = 2000)
     private String submission;
 
