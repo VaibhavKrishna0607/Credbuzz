@@ -10,23 +10,22 @@ from typing import Optional, Tuple
 MODEL_PATH = Path(__file__).parent.parent / "models" / "bid_success_model.joblib"
 SCALER_PATH = Path(__file__).parent.parent / "models" / "feature_scaler.joblib"
 
-# Feature names in order expected by the model (now includes text features)
+# Feature names in order expected by the model (UPDATED for v3)
 FEATURE_NAMES = [
     "skillMatchScore",
-    "creditDelta", 
-    "deadlineDelta",
+    "creditFairness",      # Changed from creditDelta
+    "deadlineRealism",     # Changed from deadlineDelta
     "completionRate",
     "avgRating",
     "lateRatio",
     "workloadScore",
     "experienceLevel",
-    # New text-based features
     "proposalRelevanceScore",
     "keywordCoverageScore"
 ]
 
-# Model version - bumped for new features
-MODEL_VERSION = "1.1.0"
+# Model version
+MODEL_VERSION = "2.0.0"
 
 
 class BidSuccessPredictor:
@@ -58,29 +57,44 @@ class BidSuccessPredictor:
     
     def predict(self, features: dict) -> Tuple[float, float]:
         """
-        Predict success probability for a bid
-        
-        Returns:
-            Tuple of (success_probability, confidence)
+        Predict success probability for a bid.
+        All features 0-1 normalized (including experienceLevel from backend).
+        Returns (success_probability, confidence) with confidence = abs(prob - 0.5) * 2.
         """
-        # Extract features in correct order (including new text features)
+        def get(name: str, default: float) -> float:
+            v = features.get(name)
+            return default if v is None else float(v)
+
+        skill_match = get("skillMatchScore", 0.0)
+        credit_fairness = get("creditFairness", None) or get("creditDelta", 0.5)
+        deadline_realism = get("deadlineRealism", None) or get("deadlineDelta", 0.5)
+        completion_rate = get("completionRate", 0.6)
+        avg_rating = get("avgRating", 0.5)
+        late_ratio = get("lateRatio", 0.1)
+        workload = get("workloadScore", 0.0)
+        exp_level = get("experienceLevel", 0.0)
+        proposal_rel = get("proposalRelevanceScore", 0.5)
+        keyword_cov = get("keywordCoverageScore", 0.5)
+
         feature_array = np.array([[
-            features.get("skillMatchScore", 0.0) or 0.0,
-            features.get("creditDelta", 0.0) or 0.0,
-            features.get("deadlineDelta", 0.0) or 0.0,
-            features.get("completionRate", 0.0) or 0.0,
-            features.get("avgRating", 0.0) or 0.0,
-            features.get("lateRatio", 0.0) or 0.0,
-            features.get("workloadScore", 0.0) or 0.0,
-            features.get("experienceLevel", 0.0) or 0.0,
-            features.get("proposalRelevanceScore", 0.5) or 0.5,
-            features.get("keywordCoverageScore", 0.5) or 0.5
+            max(0, min(1, skill_match)),
+            max(0, min(1, credit_fairness)),
+            max(0, min(1, deadline_realism)),
+            max(0, min(1, completion_rate)),
+            max(0, min(1, avg_rating)),
+            max(0, min(1, late_ratio)),
+            max(0, min(1, workload)),
+            max(0, min(1, exp_level)),
+            max(0, min(1, proposal_rel)),
+            max(0, min(1, keyword_cov))
         ]])
         
         if self.model_loaded and self.model is not None:
-            return self._ml_predict(feature_array)
+            prob, conf = self._ml_predict(feature_array)
         else:
-            return self._heuristic_predict(feature_array, features)
+            prob, conf = self._heuristic_predict(feature_array, features)
+        
+        return prob, conf
     
     def _ml_predict(self, features: np.ndarray) -> Tuple[float, float]:
         """Use trained model for prediction"""
@@ -107,73 +121,57 @@ class BidSuccessPredictor:
         """
         Heuristic fallback when no trained model available.
         
-        REBALANCED WEIGHTS (per user requirements):
-        Priority order:
-        1. Historical reliability (completionRate, lateRatio, avgRating) - HIGHEST
-        2. Skill match - HIGH  
-        3. Proposal relevance (NEW) - MEDIUM-HIGH
-        4. Timeline realism - MEDIUM
-        5. Credit delta - MEDIUM-LOW
-        6. Workload risk - LOW
+        All features are 0-1 normalized except experienceLevel.
         """
         f = features[0]  # First (only) sample
         
-        # REBALANCED weights prioritizing historical reliability
+        # Weights (sum to 1.0)
         weights = {
-            # Historical reliability - HIGHEST priority (40% total)
-            "completionRate": 0.18,        # Track record is critical
-            "lateRatio": 0.12,             # Punctuality matters
-            "avgRating": 0.10,             # Past ratings
-            
-            # Skill match - HIGH priority (18%)
+            "completionRate": 0.18,
+            "lateRatio": 0.12,
+            "avgRating": 0.10,
             "skillMatchScore": 0.18,
-            
-            # Proposal relevance - NEW MEDIUM-HIGH priority (15%)
             "proposalRelevanceScore": 0.10,
             "keywordCoverageScore": 0.05,
-            
-            # Timeline realism - MEDIUM priority (8%)
-            "deadlineDelta": 0.08,
-            
-            # Credit delta - MEDIUM-LOW priority (7%)
-            "creditDelta": 0.07,
-            
-            # Workload risk - LOW priority (5%)
+            "deadlineRealism": 0.08,
+            "creditFairness": 0.07,
             "workloadScore": 0.05,
-            
-            # Experience - LOW priority (7%)
             "experienceLevel": 0.07
         }
         
-        # Normalize features to 0-1 scale
-        skill_match = max(0, min(1, f[0]))  # Already 0-1
-        credit_score = max(0, min(1, 1 - abs(f[1])))  # creditDelta: closer to 0 is better
-        deadline_score = max(0, min(1, 1 - abs(f[2]) / 10))  # deadlineDelta
-        completion_rate = max(0, min(1, f[3]))  # Already 0-1
-        avg_rating = max(0, min(1, f[4] / 5))  # Assuming 5-star scale
-        late_penalty = max(0, min(1, 1 - f[5]))  # lateRatio: lower is better
-        workload_score = max(0, min(1, 1 - f[6]))  # workloadScore: lower is better (more available)
-        experience = max(0, min(1, f[7] / 100))  # Normalize experience
+        # All features are already 0-1 except experience
+        skill_match = f[0]
+        credit_fairness = f[1]
+        deadline_realism = f[2]
+        completion_rate = f[3]
+        avg_rating = f[4]
+        late_ratio = f[5]
+        workload_score = f[6]
+        experience = f[7]
+        proposal_relevance = f[8]
+        keyword_coverage = f[9]
         
-        # New text features (already 0-1 normalized)
-        proposal_relevance = max(0, min(1, f[8])) if len(f) > 8 else 0.5
-        keyword_coverage = max(0, min(1, f[9])) if len(f) > 9 else 0.5
+        # Invert late ratio and workload (lower is better)
+        punctuality = 1.0 - late_ratio
+        availability = 1.0 - workload_score
+        # experience is already 0-1 normalized from backend
+        experience_score = experience
         
         # Calculate weighted score
         score = (
             weights["completionRate"] * completion_rate +
-            weights["lateRatio"] * late_penalty +
+            weights["lateRatio"] * punctuality +
             weights["avgRating"] * avg_rating +
             weights["skillMatchScore"] * skill_match +
             weights["proposalRelevanceScore"] * proposal_relevance +
             weights["keywordCoverageScore"] * keyword_coverage +
-            weights["deadlineDelta"] * deadline_score +
-            weights["creditDelta"] * credit_score +
-            weights["workloadScore"] * workload_score +
-            weights["experienceLevel"] * experience
+            weights["deadlineRealism"] * deadline_realism +
+            weights["creditFairness"] * credit_fairness +
+            weights["workloadScore"] * availability +
+            weights["experienceLevel"] * experience_score
         )
         
-        # Confidence is lower for heuristic (0.5 = moderate confidence)
+        # Confidence is lower for heuristic
         return float(score), 0.5
 
 

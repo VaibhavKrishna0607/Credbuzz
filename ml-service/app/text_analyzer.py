@@ -197,6 +197,37 @@ class TextAnalyzer:
         
         return intersection / union if union > 0 else 0.5
     
+    def compute_proposal_relevance(
+        self,
+        task_description: str,
+        task_skills: Optional[List[str]],
+        proposal_text: str
+    ) -> float:
+        """
+        Proposal relevance = matched_keywords / total_required_keywords.
+        Extract required skills/keywords from task description + task_skills.
+        Value between 0 and 1.
+        """
+        if not proposal_text or not (task_description or (task_skills and len(task_skills) > 0)):
+            return 0.5
+
+        # Required keywords: explicit task skills + extracted from description
+        required = set()
+        if task_skills:
+            for s in task_skills:
+                required.add(s.lower().strip())
+        if task_description:
+            for word, _ in self.extract_keywords(task_description, top_n=15):
+                required.add(word)
+        if not required:
+            return 0.5
+
+        proposal_lower = proposal_text.lower()
+        proposal_tokens = set(self.tokenize(proposal_text))
+        matched = sum(1 for kw in required if kw in proposal_tokens or kw in proposal_lower)
+        score = matched / len(required)
+        return min(1.0, max(0.0, round(score, 4)))
+
     def analyze_proposal(
         self,
         task_description: str,
@@ -206,18 +237,18 @@ class TextAnalyzer:
         """
         Full analysis of a proposal against a task.
         
-        Returns:
-            dict with:
-            - proposalRelevanceScore: Semantic similarity (0-1)
-            - keywordCoverageScore: Keyword coverage (0-1)
-            - combinedTextScore: Weighted combination (0-1)
+        - proposalRelevanceScore: matched_keywords / total_required_keywords (0-1)
+        - keywordCoverageScore: weighted keyword coverage (0-1)
+        - combinedTextScore: weighted combination (0-1)
         """
-        relevance = self.compute_semantic_similarity(task_description, proposal_text)
-        coverage = self.compute_keyword_coverage(task_description, proposal_text, task_skills)
-        
-        # Weighted combination (relevance slightly more important)
+        relevance = self.compute_proposal_relevance(
+            task_description, task_skills or [], proposal_text
+        )
+        coverage = self.compute_keyword_coverage(
+            task_description or "", proposal_text or "", task_skills
+        )
         combined = 0.6 * relevance + 0.4 * coverage
-        
+
         return {
             "proposalRelevanceScore": round(relevance, 4),
             "keywordCoverageScore": round(coverage, 4),

@@ -7,18 +7,19 @@ from typing import Optional, List
 
 class PredictionRequest(BaseModel):
     """
-    Request model matching MLPredictionRequest.java
-    Enhanced with text-based scores
+    Request model matching MLPredictionRequest.java.
+    All features 0-1 normalized (experienceLevel is normalized in backend).
     """
     skillMatchScore: Optional[float] = 0.0
-    creditDelta: Optional[float] = 0.0
-    deadlineDelta: Optional[float] = 0.0
-    completionRate: Optional[float] = 0.0
-    avgRating: Optional[float] = 0.0
-    lateRatio: Optional[float] = 0.0
+    creditFairness: Optional[float] = None  # 1 - abs(proposed-base)/base
+    creditDelta: Optional[float] = None   # backward compat
+    deadlineRealism: Optional[float] = None
+    deadlineDelta: Optional[float] = None  # backward compat
+    completionRate: Optional[float] = 0.6
+    avgRating: Optional[float] = 0.5
+    lateRatio: Optional[float] = 0.1
     workloadScore: Optional[float] = 0.0
-    experienceLevel: Optional[float] = 0.0
-    # New text-based features
+    experienceLevel: Optional[float] = 0.0  # 0-1 normalized from backend
     proposalRelevanceScore: Optional[float] = 0.5
     keywordCoverageScore: Optional[float] = 0.5
 
