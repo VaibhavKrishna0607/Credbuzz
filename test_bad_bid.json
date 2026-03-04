@@ -1,0 +1,12 @@
+{
+  "skillMatchScore": 0.2,
+  "creditDelta": -0.6,
+  "deadlineDelta": -5.0,
+  "completionRate": 0.3,
+  "avgRating": 2.0,
+  "lateRatio": 0.6,
+  "workloadScore": 0.9,
+  "experienceLevel": 2,
+  "proposalRelevanceScore": 0.2,
+  "keywordCoverageScore": 0.15
+}

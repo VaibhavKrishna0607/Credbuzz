@@ -171,7 +171,7 @@ const isPendingSelection = task.status?.toUpperCase() === 'PENDING_SELECTION';
         maxBids: maxBidsInput
       });
       if (res.data.success) {
-        toast.success(`Bidding started! ML will auto-select after ${maxBidsInput} bids.`);
+        toast.success('Bidding started! You can select a bidder when ready.');
         setTask(res.data.data);
       }
     } catch (err: any) {
@@ -218,7 +218,7 @@ const isPendingSelection = task.status?.toUpperCase() === 'PENDING_SELECTION';
                 ${task.status?.toUpperCase() === 'COMPLETED' ? 'bg-slate-700 text-slate-300 border border-slate-600' : ''}
               `}>
                 {task.status === 'AUCTION_CLOSED' ? 'Auction Closed' : 
-                 task.status === 'PENDING_SELECTION' ? 'Needs Your Selection' : task.status}
+                 task.status === 'PENDING_SELECTION' ? 'Selecting Bidder' : task.status}
               </span>
             </div>
           </div>
@@ -287,31 +287,14 @@ const isPendingSelection = task.status?.toUpperCase() === 'PENDING_SELECTION';
                   : 'text-slate-400 hover:text-slate-300'
               }`}
             >
-              🎯 Bids {isPendingSelection && '⚠️'}
+              🎯 Bids
             </button>
           </div>
         )}
 
-        {/* PENDING_SELECTION - Manual Selection Required */}
+        {/* PENDING_SELECTION - Creator view (show bids for selection) */}
         {isPendingSelection && isCreator && activeTab === 'bids' && (
           <div className="mb-6">
-            {/* Warning Banner */}
-            <div className="mb-4 p-4 bg-gradient-to-r from-orange-900/40 to-amber-900/40 rounded-lg border border-orange-700">
-              <div className="flex items-start gap-3">
-                <div className="text-2xl">⚠️</div>
-                <div>
-                  <h3 className="text-lg font-semibold text-orange-300 mb-1">
-                    Manual Selection Required
-                  </h3>
-                  <p className="text-sm text-orange-400/90">
-                    The ML system couldn't confidently pick a winner because the top bids were too close in score. 
-                    Please review the bids below and manually select your preferred bidder.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Bid List for Manual Selection */}
             <div className="card">
               <BidList
                 taskId={task.id}
@@ -329,7 +312,7 @@ const isPendingSelection = task.status?.toUpperCase() === 'PENDING_SELECTION';
           <div className="card mb-6">
             <div className="text-center py-4">
               <div className="text-4xl mb-2">⏳</div>
-              <p className="text-lg font-medium text-orange-400 mb-2">Awaiting Manual Selection</p>
+              <p className="text-lg font-medium text-blue-400 mb-2">Bidding Closed</p>
               <p className="text-slate-400">
                 The task creator is reviewing bids and will select a winner soon.
               </p>
@@ -340,27 +323,27 @@ const isPendingSelection = task.status?.toUpperCase() === 'PENDING_SELECTION';
         {/* Bidding Section */}
         {isBiddingOpen && user && activeTab === 'bids' && (
           <div className="mb-6">
-            {/* Bid Progress Indicator */}
+            {/* Bid Count Indicator */}
             {task.maxBids && (
-              <div className="mb-4 p-4 bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-lg border border-purple-700">
+              <div className="mb-4 p-4 bg-gradient-to-r from-blue-900/40 to-slate-900/40 rounded-lg border border-blue-700">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-purple-300">
-                    🤖 ML Auto-Selection Progress
+                  <span className="text-sm font-medium text-blue-300">
+                    📊 Bidding Progress
                   </span>
-                  <span className="text-sm text-purple-400">
+                  <span className="text-sm text-blue-400">
                     {task.bidCount || 0} / {task.maxBids} bids
                   </span>
                 </div>
-                <div className="w-full bg-purple-900/50 rounded-full h-2.5">
+                <div className="w-full bg-blue-900/50 rounded-full h-2.5">
                   <div
-                    className="bg-purple-500 h-2.5 rounded-full transition-all duration-500"
+                    className="bg-blue-500 h-2.5 rounded-full transition-all duration-500"
                     style={{ width: `${Math.min(100, ((task.bidCount || 0) / task.maxBids) * 100)}%` }}
                   />
                 </div>
-                <p className="text-xs text-purple-400 mt-2">
+                <p className="text-xs text-blue-400 mt-2">
                   {(task.bidCount || 0) >= task.maxBids
-                    ? '✅ Threshold reached! ML is selecting the best bidder...'
-                    : `ML will automatically select the best bidder when ${task.maxBids} bids are received`}
+                    ? '✅ Threshold reached! Please review bids and select a winner.'
+                    : `Bidding will close for selection when ${task.maxBids} bids are received`}
                 </p>
               </div>
             )}
@@ -403,7 +386,7 @@ const isPendingSelection = task.status?.toUpperCase() === 'PENDING_SELECTION';
                 
                 {/* Max Bids Setting */}
                 <div className="flex items-center justify-center gap-4 mb-4">
-                  <label className="text-sm text-slate-400">Auto-close after:</label>
+                  <label className="text-sm text-slate-400">Close bidding after:</label>
                   <select
                     value={maxBidsInput}
                     onChange={(e) => setMaxBidsInput(Number(e.target.value))}
@@ -413,7 +396,7 @@ const isPendingSelection = task.status?.toUpperCase() === 'PENDING_SELECTION';
                       <option key={n} value={n}>{n} bids</option>
                     ))}
                   </select>
-                  <span className="text-xs text-slate-500">ML will pick the best</span>
+                  <span className="text-xs text-slate-500">You'll pick the winner</span>
                 </div>
                 
                 <button
