@@ -53,6 +53,11 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
      * Find the selected bid for a task
      */
     Optional<Bid> findByTaskIdAndSelectedTrue(Long taskId);
+    
+    /**
+     * Find bid by task and selection status
+     */
+    Optional<Bid> findByTaskAndSelected(Task task, Boolean selected);
 
     /**
      * Count bids for a task

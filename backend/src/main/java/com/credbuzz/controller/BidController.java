@@ -74,6 +74,11 @@ public class BidController {
     @GetMapping("/tasks/{taskId}/bids/ranked")
     public ResponseEntity<ApiResponse<List<BidScoreDto>>> getRankedBids(@PathVariable Long taskId) {
         try {
+            Long userId = getCurrentUserId();
+            // Only allow the task poster (creator) or admin (future) to view ranked bids
+            if (!bidService.isTaskPosterOrAdmin(taskId, userId)) {
+                return ResponseEntity.status(403).body(ApiResponse.error("Forbidden: Only the task creator can view ranked bids."));
+            }
             List<BidScoreDto> rankedBids = bidService.getRankedBids(taskId);
             return ResponseEntity.ok(ApiResponse.success(rankedBids));
         } catch (Exception e) {

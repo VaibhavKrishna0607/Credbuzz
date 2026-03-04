@@ -81,4 +81,25 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      */
     @Query("SELECT t FROM Task t WHERE t.poster.id = :userId OR t.assignee.id = :userId ORDER BY t.createdAt DESC")
     List<Task> findByUserIdPostedOrAssigned(@Param("userId") Long userId);
+    
+    /**
+     * Count tasks by assignee and status
+     */
+    long countByAssigneeAndStatus(User assignee, TaskStatus status);
+    
+    /**
+     * Count tasks by assignee with any of the given statuses
+     */
+    long countByAssigneeAndStatusIn(User assignee, List<TaskStatus> statuses);
+    
+    /**
+     * Count tasks posted by user
+     */
+    long countByPoster(User poster);
+    
+    /**
+     * Count completed tasks assigned to user
+     */
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.assignee = :user AND t.status = 'COMPLETED'")
+    long countCompletedByAssignee(@Param("user") User user);
 }

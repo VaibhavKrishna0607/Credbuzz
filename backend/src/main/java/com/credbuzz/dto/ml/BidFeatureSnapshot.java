@@ -46,16 +46,24 @@ public class BidFeatureSnapshot implements Serializable {
     private Double skillMatchScore;
 
     /**
-     * Credit delta: proposedCredits - task.baseCredits
-     * Negative = bidder asking for less (good for poster)
+     * Credit delta: abs(proposed - base) / base (raw ratio for display)
      */
     private Double creditDelta;
 
     /**
-     * Deadline delta: proposedCompletionDays - user.avgCompletionDays
-     * Negative = bidder proposing faster than their average
+     * Credit fairness score: 1 - creditDelta, clamped 0-1. Used for ML.
+     */
+    private Double creditFairness;
+
+    /**
+     * Deadline delta: proposedCompletionDays - user.avgCompletionDays (raw, for display)
      */
     private Double deadlineDelta;
+
+    /**
+     * Deadline realism score: 0-1, penalizes aggressive timelines. Used for ML.
+     */
+    private Double deadlineRealism;
 
     /**
      * Proposed credits by bidder

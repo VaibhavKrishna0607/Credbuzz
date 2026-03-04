@@ -88,14 +88,15 @@ public class MLIntegrationService {
                 if (response != null) {
                     // Create updated snapshot with ML prediction
                     BidFeatureSnapshot updated = BidFeatureSnapshot.builder()
-                            // Copy all original fields
                             .bidId(feature.getBidId())
                             .bidderId(feature.getBidderId())
                             .taskId(feature.getTaskId())
                             .bidderName(feature.getBidderName())
                             .skillMatchScore(feature.getSkillMatchScore())
                             .creditDelta(feature.getCreditDelta())
+                            .creditFairness(feature.getCreditFairness())
                             .deadlineDelta(feature.getDeadlineDelta())
+                            .deadlineRealism(feature.getDeadlineRealism())
                             .proposedCredits(feature.getProposedCredits())
                             .proposedCompletionDays(feature.getProposedCompletionDays())
                             .completionRate(feature.getCompletionRate())

@@ -48,6 +48,7 @@ public class Task {
     @ElementCollection
     @CollectionTable(name = "task_skills", joinColumns = @JoinColumn(name = "task_id"))
     @Column(name = "skill")
+    @Builder.Default
     private List<String> skills = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)

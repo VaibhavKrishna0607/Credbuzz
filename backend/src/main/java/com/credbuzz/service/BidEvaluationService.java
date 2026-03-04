@@ -1,24 +1,16 @@
 package com.credbuzz.service;
 
 import com.credbuzz.dto.BidScoreDto;
-import com.credbuzz.dto.ml.AuctionResult;
-import com.credbuzz.dto.ml.BidFeatureSnapshot;
 import com.credbuzz.entity.*;
 import com.credbuzz.repository.AuctionHistoryRepository;
 import com.credbuzz.repository.BidRepository;
 import com.credbuzz.repository.UserPerformanceRepository;
-import com.credbuzz.service.ml.FeatureEngineeringService;
-import com.credbuzz.service.ml.MLIntegrationService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * ============================================
@@ -26,13 +18,12 @@ import java.util.stream.IntStream;
  * ============================================
  * 
  * Core service for ranking bids using a heuristic scoring system.
- * This will later be replaced/augmented by ML model predictions.
+ * ML/AI integration has been removed for stability.
+ * The system uses weighted heuristic scoring based on:
+ * - Skill match, completion rate, credit fairness
+ * - Deadline realism, rating, workload, on-time rate, bid win rate
  * 
- * Current heuristic weights:
- * - 0.4 * skillMatchScore
- * - 0.3 * historicalCompletionRate
- * - 0.2 * creditFairnessScore
- * - 0.1 * deadlineRealismScore
+ * Future: ML model predictions can be reintroduced here.
  */
 @Service
 @RequiredArgsConstructor
@@ -42,9 +33,6 @@ public class BidEvaluationService {
     private final BidRepository bidRepository;
     private final UserPerformanceRepository userPerformanceRepository;
     private final AuctionHistoryRepository auctionHistoryRepository;
-    private final FeatureEngineeringService featureEngineeringService;
-    private final MLIntegrationService mlIntegrationService;
-    private final ObjectMapper objectMapper;
 
     // Heuristic weights (can be tuned or replaced by ML model)
     private static final double WEIGHT_SKILL_MATCH = 0.25;
@@ -100,120 +88,6 @@ public class BidEvaluationService {
     }
 
     /**
-     * Evaluate and rank bids using ML predictions (simplified version)
-     * Fetches bids from repository and returns BidScoreDto list
-     */
-    public List<BidScoreDto> evaluateWithML(Task task) {
-        List<Bid> bids = bidRepository.findByTaskIdOrderByCreatedAtDesc(task.getId());
-        if (bids.isEmpty()) {
-            return Collections.emptyList();
-        }
-        
-        AuctionResult result = evaluateWithML(task, bids);
-        return convertToScoreDtos(result.getRankedBids());
-    }
-
-    /**
-     * Evaluate and rank bids using ML predictions - returns full AuctionResult
-     * Use this to get confidence-aware automation information
-     */
-    public AuctionResult evaluateWithMLFullResult(Task task) {
-        List<Bid> bids = bidRepository.findByTaskIdOrderByCreatedAtDesc(task.getId());
-        if (bids.isEmpty()) {
-            return AuctionResult.builder()
-                    .taskId(task.getId())
-                    .rankedBids(Collections.emptyList())
-                    .requiresManualConfirmation(false)
-                    .totalBids(0)
-                    .build();
-        }
-        return evaluateWithML(task, bids);
-    }
-    
-    /**
-     * Convert BidFeatureSnapshots to BidScoreDtos
-     */
-    private List<BidScoreDto> convertToScoreDtos(List<BidFeatureSnapshot> features) {
-        if (features == null) return Collections.emptyList();
-        
-        List<BidScoreDto> result = new ArrayList<>();
-        for (int i = 0; i < features.size(); i++) {
-            BidFeatureSnapshot f = features.get(i);
-            Double creditDelta = f.getCreditDelta() != null ? f.getCreditDelta() : 0.0;
-            Double deadlineDelta = f.getDeadlineDelta() != null ? f.getDeadlineDelta() : 0.0;
-            
-            BidScoreDto dto = BidScoreDto.builder()
-                    .bidId(f.getBidId())
-                    .bidderId(f.getBidderId())
-                    .bidderName(f.getBidderName())
-                    .proposedCredits(f.getProposedCredits())
-                    .proposedCompletionDays(f.getProposedCompletionDays())
-                    .skillMatchScore(f.getSkillMatchScore())
-                    .completionRate(f.getCompletionRate())
-                    .creditFairnessScore(1.0 - Math.abs(creditDelta))
-                    .deadlineRealism(1.0 - Math.abs(deadlineDelta) / 10.0)
-                    .ratingScore(f.getAvgRating() != null ? f.getAvgRating() / 5.0 : 0.5)
-                    .workloadScore(f.getWorkloadScore())
-                    .onTimeScore(f.getOnTimeRate())
-                    .bidWinRate(f.getBidWinRate())
-                    .totalScore(f.getMlPredictedScore() != null ? f.getMlPredictedScore() : f.getHeuristicScore())
-                    .rank(i + 1)
-                    .usedMlPrediction(f.getUsedMlPrediction())
-                    .mlConfidence(f.getMlConfidence())
-                    .build();
-            result.add(dto);
-        }
-        return result;
-    }
-
-    /**
-     * Evaluate and rank bids using ML predictions (with heuristic fallback)
-     * This is the preferred method for production auction closing.
-     * 
-     * Includes Confidence-Aware Automation:
-     * If top 2 bids are too close, sets requiresManualConfirmation=true.
-     * 
-     * @param task The task whose auction is closing
-     * @param bids All bids for the task
-     * @return AuctionResult with ranked bids and winner
-     */
-    public AuctionResult evaluateWithML(Task task, List<Bid> bids) {
-        if (bids == null || bids.isEmpty()) {
-            return AuctionResult.builder()
-                    .taskId(task.getId())
-                    .rankedBids(Collections.emptyList())
-                    .requiresManualConfirmation(false)
-                    .build();
-        }
-
-        // Compute features for all bids
-        List<BidFeatureSnapshot> features = featureEngineeringService.computeFeaturesForAllBids(bids, task);
-
-        // Get ML predictions (with automatic fallback to heuristic)
-        List<BidFeatureSnapshot> rankedBids = mlIntegrationService.predictAndRankBids(features);
-
-        // Check if manual confirmation is required (confidence-aware automation)
-        boolean requiresManualConfirmation = mlIntegrationService.requiresManualConfirmation(rankedBids);
-        double confidenceMargin = mlIntegrationService.getConfidenceMargin(rankedBids);
-
-        // Build auction result
-        BidFeatureSnapshot winner = rankedBids.isEmpty() ? null : rankedBids.get(0);
-        
-        return AuctionResult.builder()
-                .taskId(task.getId())
-                .rankedBids(rankedBids)
-                .winningBidId(winner != null ? winner.getBidId() : null)
-                .winningScore(winner != null ? mlIntegrationService.getFinalScore(winner) : null)
-                .usedMlPrediction(winner != null && Boolean.TRUE.equals(winner.getUsedMlPrediction()))
-                // Confidence-aware automation fields
-                .requiresManualConfirmation(requiresManualConfirmation)
-                .confidenceMargin(confidenceMargin)
-                .confidenceThreshold(mlIntegrationService.getConfidenceThreshold())
-                .totalBids(bids.size())
-                .build();
-    }
-
-    /**
      * Calculate score for a single bid
      */
     private BidScoreDto calculateBidScore(Bid bid, Task task, UserPerformance performance) {
@@ -225,14 +99,14 @@ public class BidEvaluationService {
         }
 
         // Calculate individual scores
-        double skillMatchScore = calculateSkillMatchScore(task, bidder);
-        double completionRate = performance.getCompletionRate();
-        double creditFairnessScore = calculateCreditFairnessScore(bid, task);
-        double deadlineRealismScore = calculateDeadlineRealismScore(bid, task);
-        double ratingScore = normalizeRating(performance.getAvgRating());
-        double workloadScore = calculateWorkloadScore(performance);
-        double onTimeScore = performance.getOnTimeRate();
-        double bidWinRateScore = performance.getBidWinRate();
+            double skillMatchScore = calculateSkillMatchScore(task, bidder);
+            double completionRate = performance.getCompletionRate();
+            double creditFairnessScore = calculateCreditFairnessScore(bid, task);
+            double deadlineRealismScore = calculateDeadlineRealismScore(bid, task);
+            double ratingScore = normalizeRating(performance.getAvgRating());
+            double workloadScore = calculateWorkloadScore(performance);
+            double onTimeScore = performance.getOnTimeRate();
+            double bidWinRateScore = performance.getBidWinRate();
 
         // Calculate weighted total score
         double totalScore = 
@@ -384,158 +258,5 @@ public class BidEvaluationService {
                 .totalBidsPlaced(0)
                 .bidsWon(0)
                 .build();
-    }
-
-    /**
-     * Record auction history for ML training
-     */
-    @Transactional
-    public void recordAuctionHistory(Task task, List<Bid> bids, Bid selectedBid) {
-        // Compute features for all bids
-        List<BidFeatureSnapshot> features = featureEngineeringService.computeFeaturesForAllBids(bids, task);
-        Map<Long, BidFeatureSnapshot> featureMap = features.stream()
-                .collect(Collectors.toMap(BidFeatureSnapshot::getBidId, f -> f));
-
-        for (Bid bid : bids) {
-            BidFeatureSnapshot snapshot = featureMap.get(bid.getId());
-            if (snapshot == null) {
-                log.warn("No feature snapshot for bid {}, skipping", bid.getId());
-                continue;
-            }
-
-            // Serialize feature snapshot to JSON
-            String snapshotJson = null;
-            try {
-                snapshotJson = objectMapper.writeValueAsString(snapshot);
-            } catch (JsonProcessingException e) {
-                log.warn("Failed to serialize feature snapshot for bid {}: {}", bid.getId(), e.getMessage());
-            }
-
-            AuctionHistory history = AuctionHistory.builder()
-                    .taskId(task.getId())
-                    .bidId(bid.getId())
-                    .bidderId(bid.getBidder().getId())
-                    .posterId(task.getPoster().getId())
-                    .taskTitle(task.getTitle())
-                    .taskCategory(task.getCategory())
-                    .originalCredits(task.getCredits())
-                    .taskSkillCount(task.getSkills() != null ? task.getSkills().size() : 0)
-                    .proposedCredits(bid.getProposedCredits())
-                    .proposedCompletionDays(bid.getProposedCompletionDays())
-                    // Feature columns (for quick queries)
-                    .skillMatchScore(snapshot.getSkillMatchScore())
-                    .completionRate(snapshot.getCompletionRate())
-                    .creditDelta(snapshot.getCreditDelta())
-                    .deadlineDelta(snapshot.getDeadlineDelta())
-                    .avgRating(snapshot.getAvgRating())
-                    .workloadScore(snapshot.getWorkloadScore())
-                    .onTimeRate(snapshot.getOnTimeRate())
-                    .bidWinRate(snapshot.getBidWinRate())
-                    .heuristicScore(snapshot.getHeuristicScore())
-                    // JSON snapshot for ML training
-                    .featureSnapshotJson(snapshotJson)
-                    .mlPredictedScore(snapshot.getMlPredictedScore())
-                    .usedMlPrediction(Boolean.TRUE.equals(snapshot.getUsedMlPrediction()))
-                    // Outcome
-                    .wasSelected(bid.getId().equals(selectedBid.getId()))
-                    .completedSuccessfully(false) // Will be updated when task completes
-                    .build();
-
-            auctionHistoryRepository.save(history);
-        }
-
-        log.info("Recorded {} auction history records for task {}", bids.size(), task.getId());
-    }
-
-    /**
-     * Record auction history with ML feature snapshots
-     */
-    @Transactional
-    public void recordAuctionHistoryWithML(Task task, List<Bid> bids, Bid selectedBid, 
-                                           List<BidFeatureSnapshot> rankedFeatures) {
-        Map<Long, BidFeatureSnapshot> featureMap = rankedFeatures.stream()
-                .collect(Collectors.toMap(BidFeatureSnapshot::getBidId, f -> f));
-
-        for (Bid bid : bids) {
-            BidFeatureSnapshot snapshot = featureMap.get(bid.getId());
-            if (snapshot == null) {
-                // Compute features if not in ranked list
-                snapshot = featureEngineeringService.computeFeatures(bid, task);
-            }
-
-            // Serialize feature snapshot to JSON
-            String snapshotJson = null;
-            try {
-                snapshotJson = objectMapper.writeValueAsString(snapshot);
-            } catch (JsonProcessingException e) {
-                log.warn("Failed to serialize feature snapshot for bid {}: {}", bid.getId(), e.getMessage());
-            }
-
-            AuctionHistory history = AuctionHistory.builder()
-                    .taskId(task.getId())
-                    .bidId(bid.getId())
-                    .bidderId(bid.getBidder().getId())
-                    .posterId(task.getPoster().getId())
-                    .taskTitle(task.getTitle())
-                    .taskCategory(task.getCategory())
-                    .originalCredits(task.getCredits())
-                    .taskSkillCount(task.getSkills() != null ? task.getSkills().size() : 0)
-                    .proposedCredits(bid.getProposedCredits())
-                    .proposedCompletionDays(bid.getProposedCompletionDays())
-                    .skillMatchScore(snapshot.getSkillMatchScore())
-                    .completionRate(snapshot.getCompletionRate())
-                    .creditDelta(snapshot.getCreditDelta())
-                    .deadlineDelta(snapshot.getDeadlineDelta())
-                    .avgRating(snapshot.getAvgRating())
-                    .workloadScore(snapshot.getWorkloadScore())
-                    .onTimeRate(snapshot.getOnTimeRate())
-                    .bidWinRate(snapshot.getBidWinRate())
-                    .heuristicScore(snapshot.getHeuristicScore())
-                    .featureSnapshotJson(snapshotJson)
-                    .mlPredictedScore(snapshot.getMlPredictedScore())
-                    .usedMlPrediction(Boolean.TRUE.equals(snapshot.getUsedMlPrediction()))
-                    .wasSelected(bid.getId().equals(selectedBid.getId()))
-                    .completedSuccessfully(false)
-                    .build();
-
-            auctionHistoryRepository.save(history);
-        }
-
-        log.info("Recorded {} ML auction history records for task {}", bids.size(), task.getId());
-    }
-
-    private double calculateCreditDelta(Bid bid, Task task) {
-        if (task.getCredits() == null || task.getCredits() == 0) return 0;
-        return (double) (bid.getProposedCredits() - task.getCredits()) / task.getCredits();
-    }
-
-    private double calculateDeadlineDelta(Bid bid, Task task) {
-        // For now, use a default typical days; can be enhanced with category averages
-        double typicalDays = 7.0;
-        if (task.getCategory() != null) {
-            Double avg = auctionHistoryRepository.getAvgCompletionDaysByCategory(task.getCategory());
-            if (avg != null) typicalDays = avg;
-        }
-        return (bid.getProposedCompletionDays() - typicalDays) / typicalDays;
-    }
-
-    /**
-     * Update auction history when task is completed
-     */
-    @Transactional
-    public void updateAuctionOutcome(Task task, boolean completedSuccessfully, 
-                                      boolean wasOnTime, int actualDays, Double rating) {
-        List<AuctionHistory> histories = auctionHistoryRepository.findByTaskId(task.getId());
-        
-        for (AuctionHistory history : histories) {
-            if (history.getWasSelected()) {
-                history.setCompletedSuccessfully(completedSuccessfully);
-                history.setWasOnTime(wasOnTime);
-                history.setActualCompletionDays(actualDays);
-                history.setPosterRating(rating);
-                history.setTaskCompletedAt(task.getCompletedAt());
-                auctionHistoryRepository.save(history);
-            }
-        }
     }
 }

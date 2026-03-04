@@ -36,11 +36,7 @@ public class BidScoreDto {
     private Integer rank;
     
     // Original bid details
-    private Integer proposedCredits;
-    private Integer proposedCompletionDays;
-    private String proposalMessage;
-    
-    // ML prediction info
-    private Boolean usedMlPrediction;
-    private Double mlConfidence;
+        private Integer proposedCredits;
+        private Integer proposedCompletionDays;
+        private String proposalMessage;
 }

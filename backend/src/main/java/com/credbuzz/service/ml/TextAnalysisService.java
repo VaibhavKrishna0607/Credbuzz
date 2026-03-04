@@ -139,6 +139,50 @@ public class TextAnalysisService {
                 .toList();
     }
 
+    /**
+     * Simple text relevance analysis between two texts.
+     * Used for comparing submission content against requirements or proposals.
+     */
+    public TextRelevanceResult analyzeTextRelevance(String text1, String text2) {
+        if (!mlConfig.isMlEnabled()) {
+            return TextRelevanceResult.defaults();
+        }
+
+        if (text1 == null || text1.isBlank() || text2 == null || text2.isBlank()) {
+            return TextRelevanceResult.defaults();
+        }
+
+        try {
+            // Use the existing endpoint but treat text1 as proposal and text2 as description
+            TextAnalysisRequest request = new TextAnalysisRequest();
+            request.setTaskDescription(text2);
+            request.setTaskSkills(List.of()); // No specific skills for general relevance
+            request.setProposalText(text1);
+
+            var response = mlWebClient
+                    .post()
+                    .uri("/analyze-text")
+                    .body(Mono.just(request), TextAnalysisRequest.class)
+                    .retrieve()
+                    .bodyToMono(TextAnalysisResponse.class)
+                    .timeout(Duration.ofSeconds(TIMEOUT_SECONDS))
+                    .block();
+
+            if (response != null && response.getProposalRelevanceScore() != null) {
+                TextRelevanceResult result = new TextRelevanceResult();
+                result.setSimilarityScore(response.getProposalRelevanceScore());
+                result.setKeywordOverlap(response.getKeywordCoverageScore() != null ? 
+                        response.getKeywordCoverageScore() : 0.5);
+                return result;
+            }
+
+        } catch (Exception e) {
+            log.warn("Text relevance analysis failed: {}", e.getMessage());
+        }
+
+        return TextRelevanceResult.defaults();
+    }
+
     // ================================
     // Request/Response DTOs
     // ================================
@@ -195,6 +239,22 @@ public class TextAnalysisService {
             result.setCombinedTextScore(
                     response.getCombinedTextScore() != null ? response.getCombinedTextScore() : 
                             (result.getProposalRelevanceScore() + result.getKeywordCoverageScore()) / 2);
+            return result;
+        }
+    }
+
+    /**
+     * Simple text relevance result for comparing two texts
+     */
+    @Data
+    public static class TextRelevanceResult {
+        private double similarityScore;
+        private double keywordOverlap;
+
+        public static TextRelevanceResult defaults() {
+            TextRelevanceResult result = new TextRelevanceResult();
+            result.setSimilarityScore(0.5);
+            result.setKeywordOverlap(0.5);
             return result;
         }
     }

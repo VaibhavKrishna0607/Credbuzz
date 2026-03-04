@@ -31,6 +31,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class BidService {
+    /**
+     * Check if the user is the poster (creator) of the task or admin (future)
+     */
+    public boolean isTaskPosterOrAdmin(Long taskId, Long userId) {
+        Task task = taskRepository.findById(taskId)
+                .orElse(null);
+        if (task == null) return false;
+        // TODO: Add admin check if/when roles are implemented
+        return task.getPoster().getId().equals(userId);
+    }
 
     private final BidRepository bidRepository;
     private final TaskRepository taskRepository;
@@ -38,6 +48,7 @@ public class BidService {
     private final UserService userService;
     private final UserPerformanceService userPerformanceService;
     private final BidEvaluationService bidEvaluationService;
+    private final EscrowService escrowService;
     
     @Lazy
     private final TaskService taskService;
@@ -88,15 +99,16 @@ public class BidService {
         // Track bid placement for user performance metrics
         userPerformanceService.recordBidPlaced(bidderId, request.getProposedCredits());
         
-        // Check if we've reached maxBids threshold - auto-close auction
+        // Check if we've reached maxBids threshold - notify creator for manual selection
         Integer maxBids = task.getMaxBids();
         if (maxBids != null && maxBids > 0) {
             long bidCount = bidRepository.countByTaskId(taskId);
             log.info("Task {} has {}/{} bids", taskId, bidCount, maxBids);
             
             if (bidCount >= maxBids) {
-                log.info("MaxBids threshold reached for task {}. Auto-closing auction with ML selection...", taskId);
-                taskService.autoCloseAuction(taskId);
+                log.info("MaxBids threshold reached for task {}. Moving to PENDING_SELECTION for manual bid selection.", taskId);
+                task.setStatus(TaskStatus.PENDING_SELECTION);
+                taskRepository.save(task);
             }
         }
         
@@ -167,8 +179,11 @@ public class BidService {
         task.setStatus(TaskStatus.ASSIGNED);
         taskRepository.save(task);
 
-        // Refund the difference to the poster if bid is lower than original
-        // (This is optional - depends on business logic)
+        // Lock credits in escrow
+        escrowService.lockCredits(task, bid.getBidder());
+
+        // Track assignment
+        userPerformanceService.recordTaskAssigned(bid.getBidder().getId());
 
         return toDto(bid);
     }
