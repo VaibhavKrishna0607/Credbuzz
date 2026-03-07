@@ -1,5 +1,6 @@
 package com.credbuzz.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -106,6 +107,15 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             
+            // Return 401 (not 403) for unauthenticated API requests
+            .exceptionHandling(exc -> exc
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"success\":false,\"message\":\"Unauthorized - please login again\"}");
+                })
+            )
+
             // Stateless session (no server-side sessions - we use JWT)
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

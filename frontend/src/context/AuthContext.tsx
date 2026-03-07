@@ -91,9 +91,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setUser(userData);
               localStorage.setItem('user', JSON.stringify(userData));
             }
-          } catch (err) {
+          } catch (err: any) {
             console.error('Error fetching user:', err);
-            // Keep cached user if API fails
+            // Token is expired or invalid — clear it so user is prompted to log in
+            if (err.response?.status === 401 || err.response?.status === 403) {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              setToken(null);
+              setUser(null);
+              delete axios.defaults.headers.common['Authorization'];
+            }
+            // On other errors (network, etc.) keep the cached user
           }
         }
       } finally {
@@ -191,8 +199,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error refreshing user:', err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        logout();
+      }
     }
   };
 
