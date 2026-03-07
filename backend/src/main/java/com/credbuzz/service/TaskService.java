@@ -46,6 +46,7 @@ public class TaskService {
     /**
      * Get available (open or bidding) tasks for the marketplace
      */
+    @Transactional(readOnly = true)
     public List<TaskDto> getAvailableTasks() {
         List<Task> tasks = taskRepository.findByStatusInOrderByCreatedAtDesc(
                 java.util.Arrays.asList(TaskStatus.OPEN, TaskStatus.BIDDING)
@@ -56,6 +57,7 @@ public class TaskService {
     /**
      * Get tasks with optional filters
      */
+    @Transactional(readOnly = true)
     public List<TaskDto> getTasks(String search, String category, String status, Long userId) {
         List<Task> tasks;
         
@@ -74,6 +76,7 @@ public class TaskService {
     /**
      * Get single task by ID
      */
+    @Transactional(readOnly = true)
     public TaskDto getTask(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
@@ -83,6 +86,7 @@ public class TaskService {
     /**
      * Get all tasks for a user (posted or assigned to them)
      */
+    @Transactional(readOnly = true)
     public List<TaskDto> getMyTasks(Long userId) {
         List<Task> tasks = taskRepository.findByUserIdPostedOrAssigned(userId);
         return tasks.stream().map(this::toDto).collect(Collectors.toList());

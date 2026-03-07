@@ -45,7 +45,7 @@ public class Task {
     @Column(nullable = false)
     private TaskStatus status;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "task_skills", joinColumns = @JoinColumn(name = "task_id"))
     @Column(name = "skill")
     @Builder.Default
