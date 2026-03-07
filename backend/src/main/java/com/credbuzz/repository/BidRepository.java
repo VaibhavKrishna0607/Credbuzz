@@ -25,9 +25,10 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
     List<Bid> findByTaskOrderByCreatedAtDesc(Task task);
 
     /**
-     * Find bids by task ID
+     * Find bids by task ID — JOIN FETCH prevents N+1 and lazy init issues
      */
-    List<Bid> findByTaskIdOrderByCreatedAtDesc(Long taskId);
+    @Query("SELECT b FROM Bid b JOIN FETCH b.task JOIN FETCH b.bidder WHERE b.task.id = :taskId ORDER BY b.createdAt DESC")
+    List<Bid> findByTaskIdOrderByCreatedAtDesc(@Param("taskId") Long taskId);
 
     /**
      * Find all bids by a specific bidder
@@ -35,9 +36,10 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
     List<Bid> findByBidderOrderByCreatedAtDesc(User bidder);
 
     /**
-     * Find bids by bidder ID
+     * Find bids by bidder ID — JOIN FETCH prevents N+1 and lazy init issues
      */
-    List<Bid> findByBidderIdOrderByCreatedAtDesc(Long bidderId);
+    @Query("SELECT b FROM Bid b JOIN FETCH b.task JOIN FETCH b.bidder WHERE b.bidder.id = :bidderId ORDER BY b.createdAt DESC")
+    List<Bid> findByBidderIdOrderByCreatedAtDesc(@Param("bidderId") Long bidderId);
 
     /**
      * Check if a user has already bid on a task

@@ -300,14 +300,17 @@ public class DisputeService {
         return disputeRepository.findById(disputeId);
     }
 
+    @Transactional(readOnly = true)
     public List<Dispute> getUserDisputes(User user) {
         return disputeRepository.findAllInvolvingUser(user);
     }
 
+    @Transactional(readOnly = true)
     public List<Dispute> getOpenDisputes() {
         return disputeRepository.findByStatusOrderByFiledAtAsc(DisputeStatus.OPEN);
     }
 
+    @Transactional(readOnly = true)
     public List<Dispute> getDisputesUnderReview() {
         return disputeRepository.findByStatus(DisputeStatus.UNDER_REVIEW);
     }

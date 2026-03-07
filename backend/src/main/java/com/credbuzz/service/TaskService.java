@@ -300,6 +300,7 @@ public class TaskService {
     /**
      * Get ranked bids for a task (preview before closing)
      */
+    @Transactional(readOnly = true)
     public List<BidScoreDto> getRankedBids(Long taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found"));

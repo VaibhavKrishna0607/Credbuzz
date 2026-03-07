@@ -34,6 +34,7 @@ public class BidService {
     /**
      * Check if the user is the poster (creator) of the task or admin (future)
      */
+    @Transactional(readOnly = true)
     public boolean isTaskPosterOrAdmin(Long taskId, Long userId) {
         Task task = taskRepository.findById(taskId)
                 .orElse(null);
@@ -118,6 +119,7 @@ public class BidService {
     /**
      * Get all bids for a task
      */
+    @Transactional(readOnly = true)
     public List<BidDto> getBidsForTask(Long taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
@@ -129,6 +131,7 @@ public class BidService {
     /**
      * Get all bids placed by a user
      */
+    @Transactional(readOnly = true)
     public List<BidDto> getMyBids(Long userId) {
         List<Bid> bids = bidRepository.findByBidderIdOrderByCreatedAtDesc(userId);
         return bids.stream().map(this::toDto).collect(Collectors.toList());
@@ -137,6 +140,7 @@ public class BidService {
     /**
      * Get a specific bid by ID
      */
+    @Transactional(readOnly = true)
     public BidDto getBid(Long bidId) {
         Bid bid = bidRepository.findById(bidId)
                 .orElseThrow(() -> new RuntimeException("Bid not found"));
@@ -251,6 +255,7 @@ public class BidService {
     /**
      * Get ranked bids for a task using AI scoring
      */
+    @Transactional(readOnly = true)
     public List<BidScoreDto> getRankedBids(Long taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
