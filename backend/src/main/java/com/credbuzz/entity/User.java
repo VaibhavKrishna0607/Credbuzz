@@ -58,7 +58,7 @@ public class User {
     @Column(length = 500)
     private String bio;
 
-    @ElementCollection
+    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
     @CollectionTable(name = "user_skills", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "skill")
     @Builder.Default

@@ -2,6 +2,7 @@ package com.credbuzz.security;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -49,6 +50,9 @@ import java.util.List;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    @Value("${cors.allowed-origins:http://localhost:3000}")
+    private String allowedOrigins;
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
@@ -144,12 +148,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Allowed origins (frontend URLs)
-        configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:3000",   // Next.js
-            "http://localhost:5173",   // Vite
-            "https://credbuzz.netlify.app"  // Production
-        ));
+        // Allowed origins — driven by cors.allowed-origins in application.properties
+        // Local: http://localhost:3000  |  Prod: set CORS_ORIGINS env var on Render
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         
         // Allowed HTTP methods
         configuration.setAllowedMethods(Arrays.asList(
